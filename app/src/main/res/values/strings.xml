@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">PLUS</string>
+    <string name="button_0">5</string>
+    <string name="button_1">6</string>
+    <string name="button_2">7</string>
+    <string name="button_3">8</string>
+    <string name="button_4">9</string>
+    <string name="button_5">10</string>
+    <string name="button_6">11</string>
+    <string name="button_7">12</string>
+    <string name="button_8">13</string>
+
+
+    <string name="textviewHowTo">How to Play</string>
+    <string name="textviewDirections">
+        \n
+        • Eliminate all red tiles to generate the next level    \n\n
+        • Clicking a tile will flip the tiles adjacent (tiles that share a side)    \n\n
+        • Each level will increase in difficulty by one move    \n\n
+    </string>
+    <string name="Button_Play">PLAY</string>
+
+
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="Button_Home">HOME</string>
+    <string name="Button_RegenerateLevel">Regenerate\nLevel</string>
+    <string name="textviewChoose">Choose Grid Size</string>
+    <string name="textviewTitle">PLUS</string>
+    <string name="textviewLevel">Level</string>
+    <string name="textviewTotalTime">Total Time</string>
+    <string name="textviewRoundTime">Round Time</string>
+    <string name="textviewTotalMoves">Total Moves: 0</string>
+    <string name="textviewRoundMoves">Round Moves: 0</string>
+
+</resources>

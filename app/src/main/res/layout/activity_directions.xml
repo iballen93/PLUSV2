@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#003849"
+    tools:context="com.game.iball.plus.DirectionsActivity">
+
+    <TextView
+        android:id="@+id/textViewTitle"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:paddingLeft="18dp"
+        android:paddingRight="18dp"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMaxTextSize="200sp"
+        android:fontFamily="serif"
+        android:includeFontPadding="false"
+        android:text="@string/textviewTitle"
+        android:textAlignment="center"
+        android:textColor="#C01F1A"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewDirections"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:autoSizeMinTextSize="25sp"
+        android:autoSizeTextType="uniform"
+        android:lineSpacingExtra="8dp"
+        android:paddingBottom="100dp"
+        android:paddingEnd="20dp"
+        android:paddingStart="20dp"
+        android:paddingTop="185dp"
+        android:text="@string/textviewDirections"
+        android:textColor="@color/black_overlay"
+        app:layout_constraintBottom_toTopOf="@id/buttonPlay"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
+
+    <Button
+        android:id="@+id/buttonPlay"
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="@string/Button_Play"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</android.support.constraint.ConstraintLayout>
