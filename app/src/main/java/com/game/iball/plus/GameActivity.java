@@ -4,11 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,83 +24,67 @@ import android.widget.Toast;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static java.lang.String.format;
+
 public class GameActivity extends AppCompatActivity {
 
-    Handler customHandler = new Handler();
-    String gridSize;
-    Integer[] mThumbIds;
-    int fullWidthPX;
-    float fullWidthDP, singleCellWidthDP, singleCellWidthPX;
-    boolean allBlack;
-    int level = 1;
-    int roundMoves = 0;
-    int totalMoves = 0;
-    int roundMin, roundSec, roundMillisecond;
-    int totalMin, totalSec, totalMillisecond;
-    long timeInMillisecondsRound = 0;
-    long timeInMillisecondsTotal = 0;
-    long updatedRoundTime = 0;
-    long updatedTotalTime = 0;
-    boolean firstClick = true;
-    boolean stopClicked;
-    private long startRoundTime = 0;
-    private long startTotalTime = 0;
-    long timeSwapBuffRound = 0;
-    long timeSwapBuffTotal = 0;
-    String stringMovesSuffix = "";
-    TextView tvLevel;
-    TextView tvRoundMoves;
-    TextView tvTotalMoves;
-    TextView tvRoundTime;
-    TextView tvTotalTime;
-    GridView gvGameBoard;
+    private Handler customHandler = new Handler();
+    private Integer[] mThumbIds;
+    private GridView gvGameBoard ;
+    private TextView tvLevel;
+    private TextView tvRoundMoves;
+    private TextView tvTotalMoves;
+    private TextView tvRoundTime;
+    private TextView tvTotalTime;
+
+    private boolean firstClick = true;
+    private int level = 1;
+    private int gridSize;
+    private int roundMoves = 0;
+    private int totalMoves = 0;
+    private int roundMin, roundSec, roundMillisecond;
+    private int totalMin, totalSec, totalMillisecond;
+    private long roundTimeStart = 0;
+    private long totalTimeStart = 0;
+    private long roundTimeUpdated = 0;
+    private long totalTimeUpdated = 0;
+    private long roundTimeSwapBuff = 0;
+    private long totalTimeSwapBuff = 0;
+    private long roundTimeInMilliseconds = 0;
+    private long totalTimeInMilliseconds = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
+
+        cleanupView();
         generateUI();
         generateGrid();
         generateLevel();
+
         gvGameBoard.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                if(firstClick){
-                    startTimers();
-                    stopClicked = false;
-                    firstClick = false;
-                }
+                firstClickActions();
                 generatePlus(position);
                 totalMoves++;
                 roundMoves++;
-                allBlack = true;
-                for(int i=0; i<Integer.parseInt(gridSize)*Integer.parseInt(gridSize); i++){
-                    if(mThumbIds[i].intValue() == R.drawable.pixel_red){
-                        allBlack = false;
-                    }
-                }
 
                 //~~~~~~~~WIN~~~~~~~~\\
-                if(allBlack){
-                    if(roundMoves > 1){
-                        stringMovesSuffix = "s";
-                    }
-                    if(!stopClicked){
-                        Toast.makeText(GameActivity.this, "You beat Level " + Integer.toString(level) + "!\n" + Integer.toString(roundMoves) + " move" + stringMovesSuffix + '\n' + (((double) updatedRoundTime) / 1000.0d) + " seconds", Toast.LENGTH_LONG).show();
-                        stopClicked = true;
-                    }
+                if (isWin()) {
                     stopTimers();
+                    Toast.makeText(GameActivity.this, "You beat Level " + level + "!\n" + roundMoves + generateMoveText() + '\n'
+                            + roundTimeUpdated / 1000.0 + " seconds", Toast.LENGTH_LONG).show();
                     level++;
                     generateLevel();
-                    roundMoves = 0;
-                    firstClick = true;
                 }
                 setLevelText();
                 setMovesText();
             }
         });
 
-        Button regLvl = findViewById(R.id.buttonRegenerateLevel);
-        regLvl.setOnClickListener(new View.OnClickListener() {
+        Button regenerateLevel = findViewById(R.id.buttonRegenerateLevel);
+        regenerateLevel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 generateGrid();
@@ -108,7 +92,7 @@ public class GameActivity extends AppCompatActivity {
             }
         });
 
-        Button goHome =  findViewById(R.id.buttonHome);
+        Button goHome = findViewById(R.id.buttonHome);
         goHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -118,122 +102,175 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
-    private void generateLevel() {
-        int i;
-        Integer[] a = new Integer[(Integer.parseInt(gridSize) * Integer.parseInt(gridSize))];
-        for (i = 0; i < a.length; i++) {
-            a[i] = Integer.valueOf(i);
+    private boolean isWin() {
+        for (int i = 0; i < gridSize * gridSize; i++) {
+            if (mThumbIds[i] == R.drawable.pixel_red) {
+                return false;
+            }
         }
-        Collections.shuffle(Arrays.asList(a));
-        for (i = 0; i < level; i++) {
-            generatePlus(a[i].intValue());
+        return true;
+    }
+
+    private void firstClickActions() {
+        if (firstClick) {
+            firstClick = false;
+            roundMoves = 0;
+            startTimers();
         }
     }
 
-    public void generateUI() {
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.hide();
-        if (Build.VERSION.SDK_INT >= 21) {
-            Window window = getWindow();
-            window.addFlags(Integer.MIN_VALUE);
-            window.setStatusBarColor(Color.parseColor("#002E3D"));
-        }
-        Intent thisIntent = getIntent();
-        gridSize = thisIntent.getStringExtra("Pass Grid Size");
+    private void generateUI() {
+        initializeTextviews();
+        setLevelText();
+        setTimeText();
+        setMovesText();
+        gridSize = Integer.parseInt(getIntent().getStringExtra("Pass Grid Size"));
         Toast.makeText(GameActivity.this, "Starting game with grid size " + gridSize, Toast.LENGTH_SHORT).show();
+    }
+
+    private void initializeTextviews() {
         tvLevel = findViewById(R.id.textViewLevel);
-        tvLevel.setText("Level " + Integer.toString(level));
         tvRoundTime = findViewById(R.id.textViewRoundTime);
         tvTotalTime = findViewById(R.id.textViewTotalTime);
-        setTimeText();
+        tvRoundMoves = findViewById(R.id.textViewRoundMoves);
+        tvTotalMoves = findViewById(R.id.textViewTotalMoves);
+    }
+
+    private void setLevelText() {
+        tvLevel.setText(format("Level %s", Integer.toString(level)));
+    }
+
+    private void setTimeText() {
+        if (roundMin > 0) {
+            tvRoundTime.setText(format("Round Time %d:%d:%s", roundMin, roundSec, format("%03d", roundMillisecond)));
+        } else {
+            tvRoundTime.setText(format("Round Time %d:%s", roundSec, format("%03d", roundMillisecond)));
+        }
+        if (totalMin > 0) {
+            tvTotalTime.setText(format("Total Time %d:%d:%s", totalMin, totalSec, format("%03d", totalMillisecond)));
+        } else {
+            tvTotalTime.setText(format("Total Time %d:%s", totalSec, format("%03d", totalMillisecond)));
+        }
+    }
+
+    private void setMovesText() {
+        tvRoundMoves.setText(format("Round Moves: %s", Integer.toString(roundMoves)));
+        tvTotalMoves.setText(format("Total Moves: %s", Integer.toString(totalMoves)));
+    }
+
+    private String generateMoveText() {
+        return roundMoves == 1 ? " move" : " moves";
     }
 
     private void generateGrid() {
         boolean black = true;
-        mThumbIds = new Integer[Integer.parseInt(gridSize) * Integer.parseInt(gridSize)];
-        for (int i = 0; i < (Integer.parseInt(gridSize) * Integer.parseInt(gridSize)); i++){
-            if(Integer.parseInt(gridSize) % 2 == 0){
-                if(black){
-                    mThumbIds[i] = Integer.valueOf(R.drawable.pixel_black);
+        mThumbIds = new Integer[gridSize * gridSize];
+        for (int cell = 0; cell < gridSize * gridSize; cell++) {
+            if (isEven(gridSize)) {
+                if (black) {
+                    mThumbIds[cell] = R.drawable.pixel_black;
                     black = false;
-                }else{
-                    mThumbIds[i] = Integer.valueOf(R.drawable.pixel_grey);
+                } else {
+                    mThumbIds[cell] = R.drawable.pixel_grey;
                     black = true;
                 }
-            }else if (i % 2 == 0){
-                mThumbIds[i] = Integer.valueOf(R.drawable.pixel_black);
-            }else{
-                mThumbIds[i] = Integer.valueOf(R.drawable.pixel_grey);
+            } else if (isEven(cell)) {
+                mThumbIds[cell] = R.drawable.pixel_black;
+            } else {
+                mThumbIds[cell] = R.drawable.pixel_grey;
             }
-            if((i + 1) % Integer.parseInt(gridSize) == 0){
-                if(black){
-                    black = false;
-                }else{
-                    black = true;
-                }
+            if ((cell + 1) % gridSize == 0) {
+                black = !black;
             }
         }
         gvGameBoard = findViewById(R.id.gridviewGameBoard);
         gvGameBoard.setAdapter(new ImageAdapter(this));
-        gvGameBoard.setNumColumns(Integer.parseInt(gridSize));
+        gvGameBoard.setNumColumns(gridSize);
         gvGameBoard.setHorizontalSpacing(0);
         gvGameBoard.setVerticalSpacing(0);
         gvGameBoard.setPadding(12, 180, 10, 0);
     }
 
+    private void generateLevel() {
+        firstClick = true;
+        int cell;
+        Integer[] cells = new Integer[gridSize * gridSize];
+        for (cell = 0; cell < cells.length; cell++) {
+            cells[cell] = cell;
+        }
+        Collections.shuffle(Arrays.asList(cells));
+        for (cell = 0; cell < level; cell++) {
+            generatePlus(cells[cell]);
+        }
+    }
+
     private void generatePlus(int cell) {
-        if (cell % Integer.parseInt(gridSize) != 0) {
+        if (isLeftOpen(cell)) {
             toggleColor(cell - 1);
         }
-        if (cell % Integer.parseInt(gridSize) != Integer.parseInt(gridSize) - 1) {
+        if (isRightOpen(cell)) {
             toggleColor(cell + 1);
         }
-        if (cell >= Integer.parseInt(gridSize)) {
-            toggleColor(cell - Integer.parseInt(gridSize));
+        if (isUpOpen(cell)) {
+            toggleColor(cell - gridSize);
         }
-        if (cell < (Integer.parseInt(gridSize) * Integer.parseInt(gridSize)) - Integer.parseInt(gridSize)) {
-            toggleColor(Integer.parseInt(gridSize) + cell);
+        if (isDownOpen(cell)) {
+            toggleColor(gridSize + cell);
         }
         ((GridView) findViewById(R.id.gridviewGameBoard)).setAdapter(new ImageAdapter(this));
+    }
+
+    private boolean isLeftOpen(int cell) {
+        return cell % gridSize != 0;
+    }
+
+    private boolean isRightOpen(int cell) {
+        return cell % gridSize != gridSize - 1;
+    }
+
+    private boolean isUpOpen(int cell) {
+        return cell >= gridSize;
+    }
+
+    private boolean isDownOpen(int cell) {
+        return cell < (gridSize * gridSize) - gridSize;
     }
 
     private void toggleColor(int cell) {
-        if (mThumbIds[cell].intValue() != R.drawable.pixel_red) {
-            mThumbIds[cell] = Integer.valueOf(R.drawable.pixel_red);
-        } else if (Integer.parseInt(gridSize) % 2 == 0) {
-            if ((cell / Integer.parseInt(gridSize)) % 2 == 0 && (cell % Integer.parseInt(gridSize)) % 2 == 0) {
-                mThumbIds[cell] = Integer.valueOf(R.drawable.pixel_black);
-            }
-            if ((cell / Integer.parseInt(gridSize)) % 2 == 0 && (cell % Integer.parseInt(gridSize)) % 2 == 1) {
-                mThumbIds[cell] = Integer.valueOf(R.drawable.pixel_grey);
-            }
-            if ((cell / Integer.parseInt(gridSize)) % 2 == 1 && (cell % Integer.parseInt(gridSize)) % 2 == 0) {
-                mThumbIds[cell] = Integer.valueOf(R.drawable.pixel_grey);
-            }
-            if ((cell / Integer.parseInt(gridSize)) % 2 == 1 && (cell % Integer.parseInt(gridSize)) % 2 == 1) {
-                mThumbIds[cell] = Integer.valueOf(R.drawable.pixel_black);
-            }
-        } else if (cell % 2 == 0) {
-            mThumbIds[cell] = Integer.valueOf(R.drawable.pixel_black);
-        } else {
-            mThumbIds[cell] = Integer.valueOf(R.drawable.pixel_grey);
+        if (mThumbIds[cell] != R.drawable.pixel_red) {
+            mThumbIds[cell] = R.drawable.pixel_red;
+        } else if (isBlack(cell)) {
+            mThumbIds[cell] = R.drawable.pixel_black;
+        } else if (isGrey(cell)) {
+            mThumbIds[cell] = R.drawable.pixel_grey;
         }
         ((GridView) findViewById(R.id.gridviewGameBoard)).setAdapter(new ImageAdapter(this));
     }
 
-    public int getSingleCellWidth() {
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        fullWidthPX = metrics.widthPixels;
-        fullWidthDP = ((metrics.widthPixels) / ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT));
-        singleCellWidthPX = fullWidthPX / Float.parseFloat(gridSize);
-        singleCellWidthDP = fullWidthDP / Float.parseFloat(gridSize);
-
-
-        return (int) (singleCellWidthPX);
+    private boolean isBlack(int cell) {
+        return isEven(gridSize) ? (isEven(cell / gridSize) && isEven(cell % gridSize)) || (isOdd(cell / gridSize) && isOdd(cell % gridSize)) : isEven(cell);
     }
 
-    public class ImageAdapter extends BaseAdapter {
+    private boolean isGrey(int cell) {
+        return isEven(gridSize) ? (isEven(cell / gridSize) && isOdd(cell % gridSize)) || (isOdd(cell / gridSize) && isEven(cell % gridSize)) : !isEven(cell);
+    }
+
+    private boolean isEven(int num) {
+        return num % 2 == 0;
+    }
+
+    private boolean isOdd(int num) {
+        return num % 2 == 1;
+    }
+
+    private int getSingleCellWidth() {
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        return metrics.widthPixels / gridSize;
+    }
+
+    private class ImageAdapter extends BaseAdapter {
+
         private Context mContext;
 
         public ImageAdapter(Context c) {
@@ -270,58 +307,45 @@ public class GameActivity extends AppCompatActivity {
     private Runnable updateTimerThread = new Runnable() {
         @Override
         public void run() {
-            timeInMillisecondsTotal = SystemClock.uptimeMillis() - startTotalTime;
-            timeInMillisecondsRound = SystemClock.uptimeMillis() - startRoundTime;
-            updatedTotalTime = timeSwapBuffTotal + timeInMillisecondsTotal;
-            updatedRoundTime = timeSwapBuffRound + timeInMillisecondsRound;
-            totalSec = (int) (updatedTotalTime / 1000);
+            totalTimeInMilliseconds = SystemClock.uptimeMillis() - totalTimeStart;
+            roundTimeInMilliseconds = SystemClock.uptimeMillis() - roundTimeStart;
+            totalTimeUpdated = totalTimeSwapBuff + totalTimeInMilliseconds;
+            roundTimeUpdated = roundTimeSwapBuff + roundTimeInMilliseconds;
+            totalSec = (int) (totalTimeUpdated / 1000);
             totalMin = totalSec / 60;
             totalSec %= 60;
-            totalMillisecond = (int) (updatedTotalTime % 1000);
-            roundSec = (int) (updatedRoundTime / 1000);
+            totalMillisecond = (int) (totalTimeUpdated % 1000);
+            roundSec = (int) (roundTimeUpdated / 1000);
             roundMin = roundSec / 60;
             roundSec %= 60;
-            roundMillisecond = (int) (updatedRoundTime % 1000);
+            roundMillisecond = (int) (roundTimeUpdated % 1000);
             setTimeText();
             customHandler.postDelayed(this, 0);
         }
     };
 
-    public void setTimeText(){
-        if(roundMin>0){
-            tvRoundTime.setText("Round Time " + roundMin + ":" + roundSec + ":" + String.format("%03d", new Object[]{Integer.valueOf(roundMillisecond)}));
-        }else{
-            tvRoundTime.setText("Round Time " + roundSec + ":" + String.format("%03d", new Object[]{Integer.valueOf(roundMillisecond)}));
-        }
-        if(totalMin>0){
-            tvTotalTime.setText("Total Time " + totalMin + ":" + totalSec + ":" + String.format("%03d", new Object[]{Integer.valueOf(totalMillisecond)}));
-        }else{
-            tvTotalTime.setText("Total Time " + totalSec + ":" + String.format("%03d", new Object[]{Integer.valueOf(totalMillisecond)}));
-        }
-    }
-
-    public void setMovesText(){
-        tvRoundMoves = findViewById(R.id.textViewRoundMoves);
-        tvRoundMoves.setText("Round Moves: " + Integer.toString(roundMoves));
-        tvTotalMoves = findViewById(R.id.textViewTotalMoves);
-        tvTotalMoves.setText("Total Moves: " + Integer.toString(totalMoves));
-    }
-
-    public void setLevelText(){
-        tvLevel = findViewById(R.id.textViewLevel);
-        tvLevel.setText("Level " + Integer.toString(level));
-    }
-
-    public void startTimers(){
-        startTotalTime = SystemClock.uptimeMillis();
-        startRoundTime = SystemClock.uptimeMillis();
-        timeSwapBuffRound = 0;
+    private void startTimers() {
+        totalTimeStart = SystemClock.uptimeMillis();
+        roundTimeStart = SystemClock.uptimeMillis();
+        roundTimeSwapBuff = 0;
         customHandler.postDelayed(updateTimerThread, 0);
     }
 
-    public void stopTimers(){
-        timeSwapBuffTotal += timeInMillisecondsTotal;
-        timeSwapBuffRound += timeInMillisecondsRound;
+    private void stopTimers() {
+        totalTimeSwapBuff += totalTimeInMilliseconds;
+        roundTimeSwapBuff += roundTimeInMilliseconds;
         customHandler.removeCallbacks(updateTimerThread);
+    }
+
+    private void cleanupView() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
+        if (Build.VERSION.SDK_INT >= 21) {
+            Window window = getWindow();
+            window.addFlags(Integer.MIN_VALUE);
+            window.setStatusBarColor(Color.parseColor("#002E3D"));
+        }
     }
 }

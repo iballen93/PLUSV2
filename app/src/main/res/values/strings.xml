@@ -11,8 +11,8 @@
     <string name="button_8">13</string>
 
 
-    <string name="textviewHowTo">How to Play</string>
-    <string name="textviewDirections">
+    <string name="textviewHowToPlay">How to Play</string>
+    <string name="textviewDirections" formatted="true">
         \n
         • Eliminate all red tiles to generate the next level    \n\n
         • Clicking a tile will flip the tiles adjacent (tiles that share a side)    \n\n

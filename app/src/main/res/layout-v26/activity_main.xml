@@ -25,13 +25,13 @@
 
     <Button
         android:id="@+id/buttonHowTo"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:autoSizeMaxTextSize="200sp"
         android:autoSizeTextType="uniform"
         android:background="@android:color/transparent"
-        android:text="@string/textviewHowTo"
+        android:text="@string/textviewHowToPlay"
         android:textColor="@color/black_overlay"
         app:layout_constraintBottom_toTopOf="@id/textViewChoose"
         app:layout_constraintEnd_toEndOf="parent"
