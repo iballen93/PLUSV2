@@ -11,23 +11,25 @@
         android:id="@+id/textViewTitle"
         android:layout_width="match_parent"
         android:layout_height="180dp"
+        android:autoSizeMaxTextSize="200sp"
+        android:autoSizeTextType="uniform"
         android:fontFamily="serif"
         android:includeFontPadding="false"
         android:paddingLeft="18dp"
         android:paddingRight="18dp"
-
         android:text="@string/textviewTitle"
         android:textAlignment="center"
         android:textColor="#C01F1A"
-        android:textSize="150sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/textViewDirections" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textViewDirections"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:autoSizeMinTextSize="25sp"
+        android:autoSizeTextType="uniform"
         android:lineSpacingExtra="8dp"
         android:paddingStart="20dp"
         android:paddingTop="185dp"
@@ -35,10 +37,10 @@
         android:paddingBottom="100dp"
         android:text="@string/textviewDirections"
         android:textColor="@color/black_overlay"
-        android:textSize="25sp"
         app:layout_constraintBottom_toTopOf="@id/buttonPlay"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
 
     <Button
         android:id="@+id/buttonPlay"
