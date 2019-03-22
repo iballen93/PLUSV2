@@ -29,29 +29,27 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
-        android:autoSizeMaxTextSize="200sp"
+        android:autoSizeMaxTextSize="30sp"
         android:autoSizeTextType="uniform"
         android:background="@android:color/transparent"
         android:text="@string/textviewHowToPlay"
         android:textColor="@color/black_overlay"
-        app:layout_constraintBottom_toTopOf="@id/textViewChoose"
+        app:layout_constraintBottom_toTopOf="@id/textViewChooseGridSize"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
 
     <TextView
-        android:id="@+id/textViewChoose"
+        android:id="@+id/textViewChooseGridSize"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:text="@string/textviewChoose"
+        android:text="@string/textviewChooseGridSize"
         android:textSize="36sp"
         app:layout_constraintBottom_toTopOf="@+id/button1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.986" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/button0"

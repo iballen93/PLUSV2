@@ -11,8 +11,6 @@
         android:id="@+id/textViewTitle"
         android:layout_width="match_parent"
         android:layout_height="180dp"
-        android:autoSizeMaxTextSize="200sp"
-        android:autoSizeTextType="uniform"
         android:fontFamily="serif"
         android:includeFontPadding="false"
         android:paddingLeft="18dp"
@@ -20,38 +18,34 @@
         android:text="@string/textviewTitle"
         android:textAlignment="center"
         android:textColor="#C01F1A"
+        android:textSize="150sp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonHowTo"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/buttonHowTo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:autoSizeMaxTextSize="200sp"
-        android:autoSizeTextType="uniform"
         android:background="@android:color/transparent"
         android:text="@string/textviewHowToPlay"
         android:textColor="@color/black_overlay"
-        app:layout_constraintBottom_toTopOf="@id/textViewChoose"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@id/textViewChooseGridSize"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/textViewChoose"
+        android:id="@+id/textViewChooseGridSize"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:text="@string/textviewChoose"
+        android:text="@string/textviewChooseGridSize"
         android:textSize="36sp"
         app:layout_constraintBottom_toTopOf="@+id/button1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.986" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/button0"
