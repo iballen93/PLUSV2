@@ -31,5 +31,6 @@
     <string name="textviewRoundTime">Round Time</string>
     <string name="textviewTotalMoves">Total Moves: 0</string>
     <string name="textviewRoundMoves">Round Moves: 0</string>
+    <string name="textviewScore">Score 0</string>
 
 </resources>

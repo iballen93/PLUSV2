@@ -9,6 +9,14 @@ HOW TO PLAY
 
 
 CHANGELIST
+
+V4.0.0 - 5/24/20
+• Updated to API level 29
+• Introduced Beta version of score. Equation needs reworking
+• Adding some dependencies in preparation for integration with Leaderboards API to save scores
+• Minor performance improvements
+
+
 V3.0 - 1/23/18
 • Text will now autoSize thanks to the release of API level 26
 autoSizeTextType="uniform"

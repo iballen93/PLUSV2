@@ -1,45 +1,44 @@
 package com.game.iball.plus;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.GridView;
-import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Arrays;
-import java.util.Collections;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import java.text.DecimalFormat;
+import java.util.Random;
 
 import static java.lang.String.format;
 
 public class GameActivity extends AppCompatActivity {
+    private static final int BLACK = Color.BLACK;
+    private static final int GRAY = 0xFF111111;
+
+    private Button[][] gameBoard;
 
     private Handler customHandler = new Handler();
-    private Integer[] mThumbIds;
-    private GridView gvGameBoard ;
     private TextView tvLevel;
     private TextView tvRoundMoves;
     private TextView tvTotalMoves;
     private TextView tvRoundTime;
     private TextView tvTotalTime;
+    private TextView tvScore;
 
     private boolean firstClick = true;
     private int level = 1;
     private int gridSize;
+    private double score = 0.0;
     private int roundMoves = 0;
     private int totalMoves = 0;
     private int roundMin, roundSec, roundMillisecond;
@@ -60,34 +59,44 @@ public class GameActivity extends AppCompatActivity {
 
         cleanupView();
         generateUI();
-        generateGrid();
+        buildGameBoard();
         generateLevel();
 
-        gvGameBoard.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                firstClickActions();
-                generatePlus(position);
-                totalMoves++;
-                roundMoves++;
+        for (int row = 0; row < gridSize; row++) {
+            for (int col = 0; col < gridSize; col++) {
+                final int finalRow = row;
+                final int finalCol = col;
+                gameBoard[row][col].setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        firstClickActions();
+                        generatePlus(finalRow, finalCol);
+                        totalMoves++;
+                        roundMoves++;
+                        setMovesText();
 
-                //~~~~~~~~WIN~~~~~~~~\\
-                if (isWin()) {
-                    stopTimers();
-                    Toast.makeText(GameActivity.this, "You beat Level " + level + "!\n" + roundMoves + generateMoveText() + '\n'
-                            + roundTimeUpdated / 1000.0 + " seconds", Toast.LENGTH_LONG).show();
-                    level++;
-                    generateLevel();
-                }
-                setLevelText();
-                setMovesText();
+                        //~~~~~~~~WIN~~~~~~~~\\
+                        if (isWin()) {
+                            stopTimers();
+                            updateScore();
+                            setScoreText();
+                            String movesPlural = roundMoves == 1 ? " move" : " moves";
+                            Toast.makeText(GameActivity.this, "You beat Level " + level + "!\n" + roundMoves + movesPlural + '\n'
+                                    + roundTimeUpdated / 1000.0 + " seconds", Toast.LENGTH_LONG).show();
+                            level++;
+                            generateLevel();
+                        }
+                        setLevelText();
+                    }
+                });
             }
-        });
+        }
 
         Button regenerateLevel = findViewById(R.id.buttonRegenerateLevel);
         regenerateLevel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                generateGrid();
+                resetGameBoard();
                 generateLevel();
             }
         });
@@ -102,13 +111,99 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
-    private boolean isWin() {
-        for (int i = 0; i < gridSize * gridSize; i++) {
-            if (mThumbIds[i] == R.drawable.pixel_red) {
-                return false;
+    // TODO make the score get bigger as you play not smaller
+    private void updateScore() {
+        if (level == 1) {
+            if (roundMoves == 1 && isWin()) {
+                score = 1;
+            } else {
+                score -= 1;
+            }
+        } else {
+            if (roundTimeUpdated != 0 && roundMoves != 0 && roundMoves != 1) {
+                double roundScore = (1.0 / (roundTimeUpdated / 1000.0));
+                double movesScore = (1.0 / (roundMoves));
+                score += (roundScore * movesScore * 100.0);
             }
         }
-        return true;
+    }
+
+    private void buildGameBoard() {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int width = (int) (displayMetrics.widthPixels * .96);
+
+        RelativeLayout relativeLayout = findViewById(R.id.gameBoardLayout);
+        relativeLayout.setMinimumWidth(width);
+        relativeLayout.setMinimumHeight(width);
+
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width / gridSize, width / gridSize);
+        layoutParams.setMarginStart((displayMetrics.widthPixels - width) / 2);
+
+        gameBoard = new Button[gridSize][gridSize];
+        for (int row = 0; row < gridSize; row++) {
+            for (int col = 0; col < gridSize; col++) {
+                gameBoard[row][col] = new Button(this);
+                gameBoard[row][col].setX((float) (width / gridSize) * col);
+                gameBoard[row][col].setY((float) (width / gridSize) * row);
+                gameBoard[row][col].setLayoutParams(layoutParams);
+                setButtonColorDefault(gameBoard[row][col], row, col);
+                relativeLayout.addView(gameBoard[row][col], layoutParams);
+            }
+        }
+    }
+
+    private void generateLevel() {
+        firstClick = true;
+        for (int i = 1; i <= level; i++) {
+            Random random = new Random();
+            generatePlus(random.nextInt(gridSize), random.nextInt(gridSize));
+        }
+    }
+
+    private void generatePlus(int row, int col) {
+        if (col - 1 >= 0) {
+            toggleButtonColor(gameBoard[row][col - 1], row, col - 1); //left
+        }
+        if (col + 1 < gridSize) {
+            toggleButtonColor(gameBoard[row][col + 1], row, col + 1); //right
+        }
+        if (row - 1 >= 0) {
+            toggleButtonColor(gameBoard[row - 1][col], row - 1, col); //up
+        }
+        if (row + 1 < gridSize) {
+            toggleButtonColor(gameBoard[row + 1][col], row + 1, col); //down
+        }
+    }
+
+    private void toggleButtonColor(Button button, int row, int col) {
+        int buttonColor = getButtonColor(button);
+        if (buttonColor == Color.RED) {
+            setButtonColorDefault(button, row, col);
+        } else {
+            button.setBackgroundColor(Color.RED);
+        }
+    }
+
+    private int getButtonColor(Button button) {
+        ColorDrawable buttonBackground = (ColorDrawable) button.getBackground();
+        return buttonBackground.getColor();
+    }
+
+    private void setButtonColorDefault(Button button, int row, int col) {
+        if (isEven(row)) {
+            button.setBackgroundColor(isEven(col) ? BLACK : GRAY);
+        } else {
+            button.setBackgroundColor(isEven(col) ? GRAY : BLACK);
+        }
+    }
+
+    private void resetGameBoard() {
+        for (int row = 0; row < gridSize; row++) {
+            for (int col = 0; col < gridSize; col++) {
+                setButtonColorDefault(gameBoard[row][col], row, col);
+            }
+        }
     }
 
     private void firstClickActions() {
@@ -116,191 +211,6 @@ public class GameActivity extends AppCompatActivity {
             firstClick = false;
             roundMoves = 0;
             startTimers();
-        }
-    }
-
-    private void generateUI() {
-        initializeTextviews();
-        setLevelText();
-        setTimeText();
-        setMovesText();
-        gridSize = Integer.parseInt(getIntent().getStringExtra("Pass Grid Size"));
-        Toast.makeText(GameActivity.this, "Starting game with grid size " + gridSize, Toast.LENGTH_SHORT).show();
-    }
-
-    private void initializeTextviews() {
-        tvLevel = findViewById(R.id.textViewLevel);
-        tvRoundTime = findViewById(R.id.textViewRoundTime);
-        tvTotalTime = findViewById(R.id.textViewTotalTime);
-        tvRoundMoves = findViewById(R.id.textViewRoundMoves);
-        tvTotalMoves = findViewById(R.id.textViewTotalMoves);
-    }
-
-    private void setLevelText() {
-        tvLevel.setText(format("Level %s", Integer.toString(level)));
-    }
-
-    private void setTimeText() {
-        if (roundMin > 0) {
-            tvRoundTime.setText(format("Round Time %d:%d:%s", roundMin, roundSec, format("%03d", roundMillisecond)));
-        } else {
-            tvRoundTime.setText(format("Round Time %d:%s", roundSec, format("%03d", roundMillisecond)));
-        }
-        if (totalMin > 0) {
-            tvTotalTime.setText(format("Total Time %d:%d:%s", totalMin, totalSec, format("%03d", totalMillisecond)));
-        } else {
-            tvTotalTime.setText(format("Total Time %d:%s", totalSec, format("%03d", totalMillisecond)));
-        }
-    }
-
-    private void setMovesText() {
-        tvRoundMoves.setText(format("Round Moves: %s", Integer.toString(roundMoves)));
-        tvTotalMoves.setText(format("Total Moves: %s", Integer.toString(totalMoves)));
-    }
-
-    private String generateMoveText() {
-        return roundMoves == 1 ? " move" : " moves";
-    }
-
-    private void generateGrid() {
-        boolean black = true;
-        mThumbIds = new Integer[gridSize * gridSize];
-        for (int cell = 0; cell < gridSize * gridSize; cell++) {
-            if (isEven(gridSize)) {
-                if (black) {
-                    mThumbIds[cell] = R.drawable.pixel_black;
-                    black = false;
-                } else {
-                    mThumbIds[cell] = R.drawable.pixel_grey;
-                    black = true;
-                }
-            } else if (isEven(cell)) {
-                mThumbIds[cell] = R.drawable.pixel_black;
-            } else {
-                mThumbIds[cell] = R.drawable.pixel_grey;
-            }
-            if ((cell + 1) % gridSize == 0) {
-                black = !black;
-            }
-        }
-        gvGameBoard = findViewById(R.id.gridviewGameBoard);
-        gvGameBoard.setAdapter(new ImageAdapter(this));
-        gvGameBoard.setNumColumns(gridSize);
-        gvGameBoard.setHorizontalSpacing(0);
-        gvGameBoard.setVerticalSpacing(0);
-        gvGameBoard.setPadding(12, 180, 10, 0);
-    }
-
-    private void generateLevel() {
-        firstClick = true;
-        int cell;
-        Integer[] cells = new Integer[gridSize * gridSize];
-        for (cell = 0; cell < cells.length; cell++) {
-            cells[cell] = cell;
-        }
-        Collections.shuffle(Arrays.asList(cells));
-        for (cell = 0; cell < level; cell++) {
-            generatePlus(cells[cell]);
-        }
-    }
-
-    private void generatePlus(int cell) {
-        if (isLeftOpen(cell)) {
-            toggleColor(cell - 1);
-        }
-        if (isRightOpen(cell)) {
-            toggleColor(cell + 1);
-        }
-        if (isUpOpen(cell)) {
-            toggleColor(cell - gridSize);
-        }
-        if (isDownOpen(cell)) {
-            toggleColor(gridSize + cell);
-        }
-        ((GridView) findViewById(R.id.gridviewGameBoard)).setAdapter(new ImageAdapter(this));
-    }
-
-    private boolean isLeftOpen(int cell) {
-        return cell % gridSize != 0;
-    }
-
-    private boolean isRightOpen(int cell) {
-        return cell % gridSize != gridSize - 1;
-    }
-
-    private boolean isUpOpen(int cell) {
-        return cell >= gridSize;
-    }
-
-    private boolean isDownOpen(int cell) {
-        return cell < (gridSize * gridSize) - gridSize;
-    }
-
-    private void toggleColor(int cell) {
-        if (mThumbIds[cell] != R.drawable.pixel_red) {
-            mThumbIds[cell] = R.drawable.pixel_red;
-        } else if (isBlack(cell)) {
-            mThumbIds[cell] = R.drawable.pixel_black;
-        } else if (isGrey(cell)) {
-            mThumbIds[cell] = R.drawable.pixel_grey;
-        }
-        ((GridView) findViewById(R.id.gridviewGameBoard)).setAdapter(new ImageAdapter(this));
-    }
-
-    private boolean isBlack(int cell) {
-        return isEven(gridSize) ? (isEven(cell / gridSize) && isEven(cell % gridSize)) || (isOdd(cell / gridSize) && isOdd(cell % gridSize)) : isEven(cell);
-    }
-
-    private boolean isGrey(int cell) {
-        return isEven(gridSize) ? (isEven(cell / gridSize) && isOdd(cell % gridSize)) || (isOdd(cell / gridSize) && isEven(cell % gridSize)) : !isEven(cell);
-    }
-
-    private boolean isEven(int num) {
-        return num % 2 == 0;
-    }
-
-    private boolean isOdd(int num) {
-        return num % 2 == 1;
-    }
-
-    private int getSingleCellWidth() {
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        return metrics.widthPixels / gridSize;
-    }
-
-    private class ImageAdapter extends BaseAdapter {
-
-        private Context mContext;
-
-        public ImageAdapter(Context c) {
-            mContext = c;
-        }
-
-        public int getCount() {
-            return mThumbIds.length;
-        }
-
-        public Object getItem(int position) {
-            return null;
-        }
-
-        public long getItemId(int position) {
-            return 0;
-        }
-
-        // create a new ImageView for each item referenced by the Adapter
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ImageView imageView;
-            if (convertView == null) {
-                // if it's not recycled, initialize some attributes
-                imageView = new ImageView(mContext);
-                imageView.setLayoutParams(new GridView.LayoutParams(getSingleCellWidth(), getSingleCellWidth()));
-            } else {
-                imageView = (ImageView) convertView;
-            }
-            imageView.setImageResource(mThumbIds[position]);
-            return imageView;
         }
     }
 
@@ -337,6 +247,15 @@ public class GameActivity extends AppCompatActivity {
         customHandler.removeCallbacks(updateTimerThread);
     }
 
+    private void generateUI() {
+        initializeTextviews();
+        setLevelText();
+        setTimeText();
+        setMovesText();
+        gridSize = Integer.parseInt(getIntent().getStringExtra("Pass Grid Size"));
+        Toast.makeText(GameActivity.this, "Starting game with grid size " + gridSize, Toast.LENGTH_SHORT).show();
+    }
+
     private void cleanupView() {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -347,5 +266,55 @@ public class GameActivity extends AppCompatActivity {
             window.addFlags(Integer.MIN_VALUE);
             window.setStatusBarColor(Color.parseColor("#002E3D"));
         }
+    }
+
+    private void initializeTextviews() {
+        tvLevel = findViewById(R.id.textViewLevel);
+        tvRoundTime = findViewById(R.id.textViewRoundTime);
+        tvTotalTime = findViewById(R.id.textViewTotalTime);
+        tvRoundMoves = findViewById(R.id.textViewRoundMoves);
+        tvTotalMoves = findViewById(R.id.textViewTotalMoves);
+        tvScore = findViewById(R.id.textViewScore);
+    }
+
+    private void setLevelText() {
+        tvLevel.setText(format("Level %s", Integer.toString(level)));
+    }
+
+    private void setTimeText() {
+        if (roundMin > 0) {
+            tvRoundTime.setText(format("Round Time %d:%d:%s", roundMin, roundSec, format("%03d", roundMillisecond)));
+        } else {
+            tvRoundTime.setText(format("Round Time %d:%s", roundSec, format("%03d", roundMillisecond)));
+        }
+        if (totalMin > 0) {
+            tvTotalTime.setText(format("Total Time %d:%d:%s", totalMin, totalSec, format("%03d", totalMillisecond)));
+        } else {
+            tvTotalTime.setText(format("Total Time %d:%s", totalSec, format("%03d", totalMillisecond)));
+        }
+    }
+
+    private void setMovesText() {
+        tvRoundMoves.setText(format("Round Moves: %s", Integer.toString(roundMoves)));
+        tvTotalMoves.setText(format("Total Moves: %s", Integer.toString(totalMoves)));
+    }
+
+    private void setScoreText() {
+        tvScore.setText(format("Score %s", new DecimalFormat("#,###.00").format(score)));
+    }
+
+    private boolean isWin() {
+        for (int row = 0; row < gridSize; row++) {
+            for (int col = 0; col < gridSize; col++) {
+                if (getButtonColor(gameBoard[row][col]) == Color.RED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean isEven(int i) {
+        return i % 2 == 0;
     }
 }
