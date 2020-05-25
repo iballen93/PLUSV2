@@ -24,7 +24,7 @@
     <string name="title_activity_fullscreen">FullscreenActivity</string>
     <string name="Button_Home">HOME</string>
     <string name="Button_RegenerateLevel">Regenerate\nLevel</string>
-    <string name="textviewChoose">Choose Grid Size</string>
+    <string name="textviewChooseGridSize">Choose Grid Size</string>
     <string name="textviewTitle">PLUS</string>
     <string name="textviewLevel">Level</string>
     <string name="textviewTotalTime">Total Time</string>
